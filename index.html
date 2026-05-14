@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>业务审批流程优化 · 意见反馈跟进看板（共享版）</title>
+<style>
+/* 纯本地版 — 无任何外部依赖，双击即可使用 */
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0ede6;
+  --border:#e0dcd4;--border2:#c8c4bc;
+  --text:#1a1916;--text2:#6b6760;--text3:#9b9890;
+  --accent:#2d6a4f;--accent-light:#e8f5ee;
+  --accent2:#c17f24;--accent2-light:#fef6e4;
+  --red:#b5451b;--red-light:#fdeee8;
+  --blue:#1a5276;--blue-light:#ebf3fb;
+  --purple:#6c3483;--purple-light:#f5eef8;
+  --teal:#0e6655;--teal-light:#e8f8f5;
+  --gray:#5d6d7e;--gray-light:#f2f3f4;
+  --urgent:#c0392b;--urgent-light:#fdecec;
+  --important:#7d3c98;--important-light:#f5eef8;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6;min-height:100vh}
+
+/* HEADER */
+.header{background:var(--text);color:#fff;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:200}
+.logo{font-weight:700;font-size:14px}
+.logo span{color:#7fb89c}
+.header-meta{font-size:11px;color:#9b9890;margin-left:12px}
+.hright{display:flex;align-items:center;gap:8px}
+.hbtn{font-family:inherit;font-size:12px;padding:5px 13px;border-radius:4px;cursor:pointer;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.09);color:#fff;transition:background .15s;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.18)}
+.hbtn-add{background:var(--accent);border-color:var(--accent)}
+.hbtn-add:hover{background:#245a42}
+.save-hint{font-size:11px;color:#9b9890;font-family:Consolas,"Courier New",monospace}
+
+/* VIEW TABS */
+.view-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex}
+.vbtn{padding:10px 16px;font-size:13px;cursor:pointer;border:none;border-bottom:2px solid transparent;color:var(--text2);background:none;font-family:inherit;transition:all .15s;white-space:nowrap}
+.vbtn:hover{color:var(--text)}
+.vbtn.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+
+/* DASHBOARD */
+#dashView{display:none}
+#dashView.active{display:block}
+.dash{padding:18px 20px}
+.dash-section{margin-bottom:22px}
+.section-title{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text);display:flex;align-items:center;gap:8px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:18px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:14px 16px;box-shadow:var(--shadow)}
+.scard-n{font-size:24px;font-weight:700;line-height:1}
+.scard-l{font-size:11px;color:var(--text3);margin-top:4px}
+.scard-sub{font-size:11px;margin-top:5px;color:var(--text2)}
+
+.battle-rows{display:flex;flex-direction:column;gap:8px}
+.brow{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:11px 14px}
+.brow-top{display:flex;align-items:center;gap:8px;margin-bottom:7px;flex-wrap:wrap}
+.brow-name{font-weight:500;font-size:13px;min-width:68px}
+.brow-chips{display:flex;gap:5px;flex-wrap:wrap;flex:1}
+.chip{font-size:11px;padding:2px 8px;border-radius:10px;font-weight:500}
+.chip-pend{background:var(--red-light);color:var(--red)}
+.chip-ing{background:var(--accent2-light);color:var(--accent2)}
+.chip-done{background:var(--accent-light);color:var(--accent)}
+.chip-skip{background:var(--gray-light);color:var(--gray)}
+.chip-urg{background:var(--urgent-light);color:var(--urgent)}
+.chip-imp{background:var(--important-light);color:var(--important)}
+.brow-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;display:flex}
+.bbar-seg{height:100%;transition:width .4s}
+
+.prio-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:9px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:11px 13px;border-left:3px solid var(--border);cursor:pointer;transition:box-shadow .15s}
+.pcard:hover{box-shadow:var(--shadow-md)}
+.pcard.c-urg{border-left-color:var(--urgent)}
+.pcard.c-imp{border-left-color:var(--important)}
+.pcard.c-both{border-left-color:var(--urgent)}
+.pcard-top{display:flex;align-items:flex-start;gap:6px;margin-bottom:4px}
+.pcard-obj{font-size:12px;font-weight:600;flex:1}
+.pcard-meta{font-size:10px;color:var(--text3);margin-bottom:4px}
+.pcard-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.pcard-status{font-size:10px;margin-top:5px;font-weight:500}
+
+.type-bars{display:flex;flex-direction:column;gap:6px}
+.tbar-row{display:flex;align-items:center;gap:10px}
+.tbar-lbl{font-size:11px;color:var(--text2);min-width:88px;text-align:right}
+.tbar-bg{flex:1;height:16px;background:var(--border);border-radius:3px;overflow:hidden}
+.tbar-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding-left:6px}
+.tbar-cnt{font-size:10px;color:#fff;font-weight:500}
+.tbar-pct{font-size:11px;color:var(--text3);min-width:30px}
+
+/* BOARD */
+#boardView{display:none}
+#boardView.active{display:block}
+.tabs{background:var(--surface);border-bottom:1px solid var(--border);padding:0 20px;display:flex;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:10px 14px;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);white-space:nowrap;user-select:none;flex-shrink:0;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab-n{display:inline-block;background:var(--border);color:var(--text2);font-size:10px;padding:1px 5px;border-radius:9px;margin-left:4px}
+.tab.active .tab-n{background:var(--accent-light);color:var(--accent)}
+
+.filters{background:var(--surface);border-bottom:1px solid var(--border);padding:9px 20px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.fl{font-size:11px;color:var(--text3);white-space:nowrap}
+select,input[type=text]{font-family:inherit;font-size:12px;height:29px;padding:0 9px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);outline:none}
+select:focus,input[type=text]:focus{border-color:var(--accent)}
+input[type=text]{min-width:180px}
+.fsep{width:1px;height:18px;background:var(--border)}
+.rcnt{font-size:11px;background:var(--text);color:#fff;padding:2px 8px;border-radius:9px;margin-left:auto}
+
+.legend{padding:7px 20px 2px;display:flex;gap:12px;flex-wrap:wrap}
+.li{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.ld{width:7px;height:7px;border-radius:2px}
+
+.page{padding:12px 20px}
+.group{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.group-hd{padding:11px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .12s}
+.group-hd:hover{background:var(--surface2)}
+.group-title{font-size:13px;font-weight:600;flex:1}
+.group-meta{font-size:11px;color:var(--text3);display:flex;gap:10px;align-items:center}
+.chevron{font-size:10px;color:var(--text3);transition:transform .2s}
+.group.open .chevron{transform:rotate(90deg)}
+.group-body{display:none;border-top:1px solid var(--border)}
+.group.open .group-body{display:block}
+.group-add{padding:9px 16px;border-top:1px solid var(--border);display:none}
+.group.open .group-add{display:flex}
+.gadd-btn{font-family:inherit;font-size:12px;padding:4px 13px;border-radius:4px;border:1px dashed var(--border2);background:transparent;color:var(--text2);cursor:pointer;transition:all .15s}
+.gadd-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{background:var(--surface2);padding:8px 11px;text-align:left;font-weight:500;font-size:11px;color:var(--text2);white-space:nowrap;border-bottom:1px solid var(--border)}
+td{padding:9px 11px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#faf9f7}
+
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 7px;border-radius:3px;white-space:nowrap}
+.b-red{background:var(--red-light);color:var(--red)}
+.b-amber{background:var(--accent2-light);color:var(--accent2)}
+.b-green{background:var(--accent-light);color:var(--accent)}
+.b-blue{background:var(--blue-light);color:var(--blue)}
+.b-purple{background:var(--purple-light);color:var(--purple)}
+.b-teal{background:var(--teal-light);color:var(--teal)}
+.b-gray{background:var(--gray-light);color:var(--gray)}
+
+.rep-tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px;margin:1px 2px;font-size:11px;white-space:nowrap}
+
+/* priority */
+.prio-wrap{display:flex;flex-direction:column;gap:3px;min-width:72px}
+.ptag{display:inline-block;font-size:10px;font-weight:600;padding:2px 7px;border-radius:9px;cursor:pointer;user-select:none;transition:opacity .15s;letter-spacing:.2px;border:1px solid transparent}
+.ptag:hover{opacity:.7}
+.ptag-urg-on{background:var(--urgent-light);color:var(--urgent);border-color:#f5c6c6}
+.ptag-urg-off{background:var(--surface2);color:var(--text3);border-color:var(--border)}
+.ptag-imp-on{background:var(--important-light);color:var(--important);border-color:#e8d5f5}
+.ptag-imp-off{background:var(--surface2);color:var(--text3);border-color:var(--border)}
+
+/* status */
+.ss{font-family:inherit;font-size:12px;padding:3px 7px;border:1px solid transparent;border-radius:4px;background:transparent;cursor:pointer;outline:none;transition:all .15s;min-width:84px}
+.ss:hover,.ss:focus{border-color:var(--border2);background:var(--bg)}
+.s1{color:var(--red);font-weight:500}
+.s2{color:var(--accent2);font-weight:500}
+.s3{color:var(--accent);font-weight:500}
+.s4{color:var(--text3);font-weight:500}
+
+.reason-wrap{margin-top:5px;padding:6px 7px;background:var(--red-light);border-radius:4px}
+.reason-lbl{font-size:10px;color:var(--red);margin-bottom:3px;font-weight:500}
+.reason-ta{font-family:inherit;font-size:12px;padding:4px 7px;border:1px solid #f0c4b0;border-radius:4px;background:#fff;color:var(--text);width:100%;resize:vertical;min-height:42px;outline:none}
+
+/* plan */
+.plan-cell{min-width:210px}
+.plan-tabs{display:flex;gap:3px;margin-bottom:5px}
+.ptb{font-size:11px;padding:2px 8px;border-radius:3px;cursor:pointer;border:1px solid var(--border);background:var(--bg);color:var(--text2);user-select:none;transition:all .12s}
+.ptb.active{background:var(--text);color:#fff;border-color:var(--text)}
+.plan-area{display:none}
+.plan-area.active{display:block}
+.plan-ta{font-family:inherit;font-size:12px;padding:5px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);width:100%;resize:vertical;min-height:56px;outline:none}
+.plan-ta:focus{border-color:var(--accent)}
+.link-row{display:flex;gap:5px;align-items:center;margin-bottom:4px}
+.link-inp{font-family:inherit;font-size:12px;padding:3px 7px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);flex:1;outline:none;height:27px}
+.link-inp:focus{border-color:var(--accent)}
+.add-btn{font-family:inherit;font-size:11px;padding:3px 9px;border:1px solid var(--border);border-radius:4px;background:var(--surface);cursor:pointer;color:var(--text2);height:27px;transition:all .12s;white-space:nowrap}
+.add-btn:hover{background:var(--surface2);color:var(--text)}
+.link-list,.file-list{display:flex;flex-direction:column;gap:2px}
+.link-item{display:flex;align-items:center;gap:4px;font-size:11px;background:var(--blue-light);border-radius:3px;padding:2px 6px}
+.link-item a{color:var(--blue);text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:155px}
+.link-item a:hover{text-decoration:underline}
+.xbtn{cursor:pointer;color:var(--text3);font-size:11px;flex-shrink:0}
+.xbtn:hover{color:var(--red)}
+.drop-zone{border:1.5px dashed var(--border2);border-radius:4px;padding:10px 8px;text-align:center;cursor:pointer;transition:all .15s}
+.drop-zone:hover,.drop-zone.over{border-color:var(--accent);background:var(--accent-light)}
+.drop-lbl{font-size:11px;color:var(--text3)}
+.drop-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.file-item{display:flex;align-items:center;gap:4px;font-size:11px;background:var(--surface2);border-radius:3px;padding:2px 6px}
+.file-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+
+.di{font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--text);outline:none;transition:all .15s;min-width:124px}
+.di:hover,.di:focus{border-color:var(--border2);background:var(--bg)}
+.oi{font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--text);outline:none;width:72px;transition:all .15s}
+.oi:hover,.oi:focus{border-color:var(--border2);background:var(--bg)}
+.del-btn{font-family:inherit;font-size:11px;padding:2px 7px;border-radius:4px;border:1px solid transparent;background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;white-space:nowrap}
+.del-btn:hover{background:var(--red-light);border-color:#f0c4b0;color:var(--red)}
+
+/* toast */
+.toast{position:fixed;bottom:22px;right:22px;background:var(--text);color:#fff;padding:9px 16px;border-radius:6px;font-size:13px;box-shadow:var(--shadow-md);z-index:999;transform:translateY(70px);opacity:0;transition:transform .22s,opacity .22s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.ok{background:var(--accent)}
+.toast.err{background:var(--red)}
+
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .18s}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:10px;padding:24px 28px;width:560px;max-width:95vw;max-height:88vh;overflow-y:auto;box-shadow:var(--shadow-md)}
+.modal-sm{width:400px}
+.mh3{font-size:16px;font-weight:700;margin-bottom:4px}
+.msub{font-size:13px;color:var(--text2);margin-bottom:18px}
+.mrow{margin-bottom:13px}
+.mlbl{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:4px;display:block}
+.req{color:var(--red);margin-left:2px}
+.minput{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:5px;width:100%;outline:none;background:var(--bg);color:var(--text)}
+.minput:focus{border-color:var(--accent)}
+.msel{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:5px;width:100%;background:var(--bg);color:var(--text);outline:none}
+.mta{font-family:inherit;font-size:13px;padding:7px 10px;border:1px solid var(--border2);border-radius:5px;width:100%;resize:vertical;min-height:68px;outline:none;background:var(--bg);color:var(--text)}
+.mta:focus{border-color:var(--accent)}
+.mgrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mprio{display:flex;gap:10px;flex-wrap:wrap}
+.mpchk{display:flex;align-items:center;gap:5px;cursor:pointer;user-select:none;font-size:12px}
+.mpchk input{width:14px;height:14px;cursor:pointer;accent-color:var(--accent)}
+.mfooter{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border)}
+.mb{font-family:inherit;font-size:13px;padding:7px 17px;border-radius:5px;cursor:pointer;transition:all .15s;border:none}
+.mb-cancel{background:var(--surface2);border:1px solid var(--border);color:var(--text2)}
+.mb-cancel:hover{background:var(--border)}
+.mb-ok{background:var(--accent);color:#fff}
+.mb-ok:hover{background:#245a42}
+
+.empty-msg{text-align:center;padding:48px;color:var(--text3)}
+/* ── OPERATORS MULTI-TAG ── */
+.op-cell{min-width:110px;max-width:150px}
+.op-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:4px}
+.op-tag{display:inline-flex;align-items:center;gap:3px;background:var(--accent-light);border:1px solid #b8deca;border-radius:10px;font-size:11px;font-weight:500;color:var(--accent);padding:2px 7px;white-space:nowrap}
+.op-tag-del{cursor:pointer;color:var(--accent);opacity:.6;font-size:11px;line-height:1;transition:opacity .12s}
+.op-tag-del:hover{opacity:1;color:var(--red)}
+.op-add-row{display:flex;gap:4px;align-items:center}
+.op-add-inp{font-family:inherit;font-size:11px;height:24px;padding:0 7px;border:1px solid var(--border);border-radius:10px;background:var(--bg);color:var(--text);outline:none;width:72px;transition:border-color .15s}
+.op-add-inp:focus{border-color:var(--accent)}
+.op-add-btn{font-family:inherit;font-size:11px;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text2);cursor:pointer;white-space:nowrap;transition:all .12s}
+.op-add-btn:hover{background:var(--accent-light);border-color:var(--accent);color:var(--accent)}
+/* ── CUSTOM TYPE ── */
+.type-add-row{display:flex;gap:5px;align-items:center;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+.type-add-inp{font-family:inherit;font-size:12px;height:28px;padding:0 9px;border:1px solid var(--border);border-radius:4px;background:var(--bg);color:var(--text);outline:none;flex:1;min-width:0}
+.type-add-inp:focus{border-color:var(--accent)}
+.type-add-btn{font-family:inherit;font-size:12px;height:28px;padding:0 12px;border-radius:4px;border:none;background:var(--accent);color:#fff;cursor:pointer;white-space:nowrap;transition:background .15s;flex-shrink:0}
+.type-add-btn:hover{background:#245a42}
+.custom-type-tag{display:inline-flex;align-items:center;gap:4px;background:var(--accent2-light);border:1px solid #f0d090;border-radius:3px;font-size:11px;font-weight:500;color:var(--accent2);padding:2px 8px}
+.custom-type-del{cursor:pointer;color:var(--accent2);opacity:.6;font-size:11px;transition:opacity .12s}
+.custom-type-del:hover{opacity:1;color:var(--red)}
+
+/* ── INLINE EDITING ── */
+.edit-field-wrap{position:relative;border-radius:4px;transition:background .15s;padding:2px 4px;margin:-2px -4px}
+.edit-field-wrap:hover{background:var(--accent-light);outline:1px dashed var(--accent)}
+.edit-field-wrap:hover::after{content:'✎';position:absolute;top:2px;right:4px;font-size:10px;color:var(--accent);opacity:.6}
+.edit-input{font-family:inherit;border:1.5px solid var(--accent);border-radius:4px;padding:3px 7px;background:var(--surface);color:var(--text);outline:none;box-shadow:0 0 0 3px rgba(45,106,79,.12)}
+.edit-ta{font-family:inherit;border:1.5px solid var(--accent);border-radius:4px;padding:5px 7px;background:var(--surface);color:var(--text);outline:none;resize:vertical;line-height:1.6;box-shadow:0 0 0 3px rgba(45,106,79,.12)}
+.editable-badge{font-family:inherit;font-size:11px;font-weight:500;padding:2px 7px;border-radius:3px;border:none;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:none;outline:none;transition:opacity .15s}
+.editable-badge:hover{opacity:.8;outline:1.5px dashed currentColor}
+
+/* ── PERSON VIEW ── */
+.person-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:10px;margin-bottom:16px}
+.p-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 15px;box-shadow:var(--shadow);cursor:pointer;transition:box-shadow .15s}
+.p-card:hover{box-shadow:var(--shadow-md)}
+.p-card-top{display:flex;align-items:center;gap:7px;margin-bottom:9px}
+.p-avatar{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.p-name{font-size:13px;font-weight:600}
+.p-stats{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.p-stat{font-size:11px;padding:2px 6px;border-radius:9px;font-weight:500}
+.p-bar-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden;display:flex}
+.p-bar-seg{height:100%;transition:width .4s}
+.p-unassigned{border-style:dashed}
+.person-group{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.pg-hd{padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .12s}
+.pg-hd:hover{background:var(--surface2)}
+.pg-body{display:none;border-top:1px solid var(--border)}
+.person-group.open .pg-body{display:block}
+.person-group.open .pg-chev{transform:rotate(90deg)}
+.pg-chev{font-size:10px;color:var(--text3);transition:transform .2s}
+/* ── LEVEL VIEW ── */
+.matrix{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:4px}
+.quad{border-radius:8px;padding:16px 18px;min-height:110px;box-shadow:var(--shadow);position:relative}
+.quad-p1{background:#fff8f8;border:1.5px solid #f5c6c6}
+.quad-p2{background:#fbf5ff;border:1.5px solid #e4c6f5}
+.quad-p3{background:#fffbf0;border:1.5px solid #f5dfa0}
+.quad-p4{background:var(--surface2);border:1.5px solid var(--border)}
+.quad-label{position:absolute;top:10px;right:12px;font-size:10px;color:var(--text3);font-weight:500}
+.quad-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.quad-sub{font-size:11px;color:var(--text3);margin-bottom:10px}
+.quad-cnt{font-size:28px;font-weight:700;line-height:1}
+.quad-chips{display:flex;gap:4px;flex-wrap:wrap;margin-top:9px}
+.level-group{background:var(--surface);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.lg-hd{padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;transition:background .12s}
+.lg-hd:hover{background:var(--surface2)}
+.lg-body{display:none;border-top:1px solid var(--border)}
+.level-group.open .lg-body{display:block}
+.level-group.open .lg-chev{transform:rotate(90deg)}
+.lg-chev{font-size:10px;color:var(--text3);transition:transform .2s}
+.lv1{border-left:4px solid var(--urgent)}
+.lv2{border-left:4px solid var(--important)}
+.lv3{border-left:4px solid var(--accent2)}
+.lv4{border-left:4px solid var(--border2)}
+.level-row{display:flex;align-items:flex-start;gap:14px;padding:10px 16px;border-bottom:1px solid var(--border)}
+.level-row:last-child{border-bottom:none}
+.level-row:hover{background:#faf9f7}
+.lr-num{font-size:11px;color:var(--text3);min-width:18px;padding-top:2px}
+.lr-main{flex:1}
+.lr-obj{font-size:12px;font-weight:600;margin-bottom:2px}
+.lr-meta{font-size:11px;color:var(--text3);margin-bottom:4px}
+.lr-desc{font-size:11px;color:var(--text2);line-height:1.5}
+.lr-right{min-width:160px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div style="display:flex;align-items:center">
+    <div class="logo">审批流程优化 <span>·</span> 意见反馈跟进看板</div>
+    <div class="header-meta">经营中心 + 国际业务中心 · 共享版</div>
+  </div>
+  <div class="hright">
+    <span class="save-hint" id="saveHint">● 连接中…</span>
+    <button class="hbtn" onclick="exportCSV()">⬇ 导出 CSV</button>
+    <button class="hbtn hbtn-add" onclick="openAddModal()">＋ 新增问题</button>
+  </div>
+</div>
+
+<!-- VIEW TABS -->
+<div class="view-bar">
+  <button class="vbtn active" id="vbtn-dash"   onclick="switchView('dash')">📊 问题汇总</button>
+  <button class="vbtn"        id="vbtn-board"  onclick="switchView('board')">📋 跟进看板</button>
+  <button class="vbtn"        id="vbtn-person" onclick="switchView('person')">👤 经办人视图</button>
+  <button class="vbtn"        id="vbtn-level"  onclick="switchView('level')">🎯 问题分级</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashView" class="active">
+  <div class="dash">
+    <div class="dash-section">
+      <div class="section-title">总览</div>
+      <div class="summary-grid" id="summaryGrid"></div>
+    </div>
+    <div class="dash-section">
+      <div class="section-title">各战场进度</div>
+      <div class="battle-rows" id="battleRows"></div>
+    </div>
+    <div class="dash-section">
+      <div class="section-title">重要 / 紧急问题</div>
+      <div class="prio-grid" id="prioGrid"></div>
+    </div>
+    <div class="dash-section">
+      <div class="section-title">问题类型分布</div>
+      <div class="type-bars" id="typeBars"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOARD -->
+<div id="boardView">
+  <div class="tabs" id="tabs"></div>
+  <div class="filters">
+    <span class="fl">搜索</span>
+    <input type="text" id="q" placeholder="流程对象 / 描述 / 提报人…" oninput="renderAll()">
+    <div class="fsep"></div>
+    <span class="fl">问题类型</span>
+    <select id="fType" onchange="renderAll()"><option value="">全部</option></select>
+    <span class="fl">状态</span>
+    <select id="fStatus" onchange="renderAll()">
+      <option value="">全部</option><option>待处理</option><option>处理中</option><option>已完成</option><option>无需处理</option>
+    </select>
+    <span class="fl">优先级</span>
+    <select id="fPrio" onchange="renderAll()">
+      <option value="">全部</option><option value="urgent">紧急</option><option value="important">重要</option><option value="both">紧急+重要</option>
+    </select>
+    <button class="hbtn" onclick="showCustomTypesBar()" style="font-size:11px;padding:4px 10px;height:29px;border:1px solid var(--border);background:var(--bg);color:var(--text2);border-radius:4px;cursor:pointer" title="管理自定义问题类型">⚙ 管理类型</button>
+    <span class="rcnt" id="rcnt">—</span>
+  </div>
+  <!-- Custom types management bar -->
+  <div id="customTypesBar" style="background:var(--surface);border-bottom:1px solid var(--border);padding:7px 20px;display:none;align-items:center;gap:8px;flex-wrap:wrap">
+    <span style="font-size:11px;color:var(--text3)">自定义类型：</span>
+    <div id="customTypesList" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+    <div style="display:flex;gap:5px;align-items:center;margin-left:4px">
+      <input id="newTypeInp" class="type-add-inp" type="text" placeholder="输入新类型名…" maxlength="12" style="width:130px"
+        onkeydown="if(event.key==='Enter')addTypeFromBar()">
+      <button class="type-add-btn" onclick="addTypeFromBar()">＋ 添加类型</button>
+    </div>
+  </div>
+  <div class="legend">
+    <div class="li"><div class="ld" style="background:var(--red)"></div>冗余审批节点</div>
+    <div class="li"><div class="ld" style="background:var(--accent2)"></div>流程合并优化</div>
+    <div class="li"><div class="ld" style="background:var(--purple)"></div>审批人变更</div>
+    <div class="li"><div class="ld" style="background:var(--blue)"></div>系统功能缺失</div>
+    <div class="li"><div class="ld" style="background:var(--teal)"></div>流程割裂/手工</div>
+    <div class="li"><div class="ld" style="background:var(--accent)"></div>提醒/自动化</div>
+    <div class="li"><div class="ld" style="background:var(--gray)"></div>其他</div>
+  </div>
+  <div class="page" id="mainPage"></div>
+</div>
+
+<!-- PERSON VIEW -->
+<div id="personView" style="display:none">
+  <div class="dash">
+    <div class="dash-section">
+      <div class="section-title">经办人跟进概览</div>
+      <div id="personOverview"></div>
+    </div>
+    <div class="dash-section" style="margin-top:20px">
+      <div class="section-title">各经办人详情</div>
+      <div id="personDetail"></div>
+    </div>
+  </div>
+</div>
+
+<!-- LEVEL VIEW -->
+<div id="levelView" style="display:none">
+  <div class="dash">
+    <div class="dash-section">
+      <div class="section-title">问题分级矩阵 <span style="font-size:11px;font-weight:400;color:var(--text3)">— 紧急 × 重要 四象限</span></div>
+      <div id="levelMatrix"></div>
+    </div>
+    <div class="dash-section" style="margin-top:20px">
+      <div class="section-title">各级别问题清单</div>
+      <div id="levelList"></div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ADD MODAL -->
+<div class="overlay" id="addModal">
+  <div class="modal">
+    <div class="mh3" id="modalTitle">新增问题反馈</div>
+    <div class="msub">填写以下信息，数据自动保存在本地浏览器</div>
+    <div class="mgrid2">
+      <div class="mrow">
+        <label class="mlbl">战场<span class="req">*</span></label>
+        <select class="msel" id="m-battle">
+          <option value="">请选择</option>
+          <option>第一战场</option><option>第二战场</option><option>第三战场</option>
+          <option>第四战场</option><option>渠道</option><option>云动国际</option><option>其他</option>
+        </select>
+      </div>
+      <div class="mrow">
+        <label class="mlbl">问题类型<span class="req">*</span></label>
+        <select class="msel" id="m-type">
+          <option value="">请选择</option>
+          <option>冗余审批节点</option><option>流程合并优化</option><option>审批人变更</option>
+          <option>系统功能缺失</option><option>流程割裂/手工</option><option>提醒/自动化</option><option>其他</option>
+        </select>
+      </div>
+    </div>
+    <div class="mrow">
+      <label class="mlbl">流程对象<span class="req">*</span></label>
+      <input class="minput" type="text" id="m-obj" placeholder="例：实施申请、每刻报销…">
+    </div>
+    <div class="mrow">
+      <label class="mlbl">提报人（可多人，逗号分隔）<span class="req">*</span></label>
+      <input class="minput" type="text" id="m-reporters" placeholder="例：张三（华东战区），李四（北京分公司）">
+    </div>
+    <div class="mrow">
+      <label class="mlbl">问题描述<span class="req">*</span></label>
+      <textarea class="mta" id="m-desc" rows="3" placeholder="详细描述当前存在的问题…"></textarea>
+    </div>
+    <div class="mrow">
+      <label class="mlbl">修改建议</label>
+      <textarea class="mta" id="m-suggest" rows="2" placeholder="建议的改进方案…"></textarea>
+    </div>
+    <div class="mrow">
+      <label class="mlbl">优先级标签</label>
+      <div class="mprio">
+        <label class="mpchk"><input type="checkbox" id="m-urgent"><span style="background:var(--urgent-light);color:var(--urgent);padding:2px 9px;border-radius:9px;font-weight:600;font-size:12px">🔴 紧急</span></label>
+        <label class="mpchk"><input type="checkbox" id="m-important"><span style="background:var(--important-light);color:var(--important);padding:2px 9px;border-radius:9px;font-weight:600;font-size:12px">🟣 重要</span></label>
+      </div>
+    </div>
+    <div class="mfooter">
+      <button class="mb mb-cancel" onclick="closeAddModal()">取消</button>
+      <button class="mb mb-ok" onclick="submitModal()">提交</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const RAW = [
+  {battle:"第一战场",obj:"每刻报销 — 活动费用审批",type:"流程合并优化",
+   reporters:[{n:"汪梦雪",o:"中西南行业及AI创新部"},{n:"卞一涵",o:"华东战区开源中心"}],
+   desc:"每场活动需25+经办人审批，涵盖事前审批/合同审批/对公付款/个人报销4个流程，大部分经办人重复；生态使用市场活动费用时不经过战区市场审批，审批链条缺失。",
+   suggest:"1. 合并4大流程中重复的审批环节，重复经办人只审批一次。\n2. 超过设定工作小时未审批，自动提醒审批人。\n3. 生态使用市场活动费用时，均需过战区市场审批节点。"},
+
+  {battle:"第二战场",obj:"报价单盖章申请",type:"流程合并优化",
+   reporters:[{n:"杨燕君",o:"深圳分公司"},{n:"张潇",o:"福建分公司"},{n:"陈升妙",o:"广东分公司"}],
+   desc:"报价单盖章需强制关联损益测算和折扣申请，等其他流程审批后才能发起，时效性极差；折扣60%以上且符合公司指导单价的场景也须走完整流程，不合理。",
+   suggest:"1. 分场景：立项前预算报价仅到总监/战区负责人审批；正式商机报价再关联损益/折扣。\n2. 符合公司指导单价的高折扣场景，简化审批流程。\n3. 取消强制关联折扣申请和项目损益，只需关联商机即可。"},
+
+  {battle:"第二战场",obj:"折扣申请流程",type:"冗余审批节点",
+   reporters:[{n:"张潇",o:"福建分公司"},{n:"陈升妙",o:"广东分公司"}],
+   desc:"低于7折触发折扣申请，但基于公司平均成交折扣该标准意义不大；与报价单盖章审批存在冗余，两者均审批折扣，流程重叠。",
+   suggest:"建议取消折扣申请流程，或重新评估触发条件；报价审批与折扣审批二选一，避免重复。"},
+
+  {battle:"第二战场",obj:"损益测算流程",type:"流程割裂/手工",
+   reporters:[{n:"杨燕君",o:"深圳分公司"}],
+   desc:"报价未在系统录入，出合同时需重新选产品；系统缺少外部顾问成本价，利润无法准确计算；商机→报价→合同→损益整条链路割裂，手工操作繁琐。",
+   suggest:"1. 选定项目经理和顾问后直接带出成本（内部/外部）。\n2. 报价进系统后直接关联，支持上传报价单自动识别，无需重复填写。"},
+
+  {battle:"第二战场",obj:"合同盖章流程",type:"提醒/自动化",
+   reporters:[{n:"杨燕君",o:"深圳分公司"},{n:"陈升妙",o:"广东分公司"}],
+   desc:"所有合同盖章依赖排队和手动催促，无加急机制，月底压单严重；要求关联损益但损益字段未标注必填星号，容易遗漏。",
+   suggest:"1. 增加加急流程，月底临近回款时流程有优先级机制。\n2. 标准合同直接使用会签流程。\n3. 所有必填项必须标注星号并重点提示。"},
+
+  {battle:"第二战场",obj:"供应商资质盖章流程",type:"系统功能缺失",
+   reporters:[{n:"张潇",o:"福建分公司"},{n:"陈升妙",o:"广东分公司"}],
+   desc:"上线销售合同后供应商资质盖章入口消失，不清楚从哪里发起；且流程要求填写大量业务无关字段（如新购/增购、端口数等），操作繁琐。",
+   suggest:"单独增加供应商资质盖章流程入口；公司标准文件直接到法务盖章，简化无关字段。"},
+
+  {battle:"第二战场",obj:"增购提成流程",type:"提醒/自动化",
+   reporters:[{n:"杨燕君",o:"深圳分公司"}],
+   desc:"增购提成流程目前需要手动发起，无自动触发机制，效率低下。",
+   suggest:"按默认规则自动拆分发起提成流程，相关方收到待办后审核即可，无需手动操作。"},
+
+  {battle:"第三战场",obj:"实施申请（含需求反馈/实施变更/产品灰度）— 审批人",type:"审批人变更",
+   reporters:[{n:"代航",o:"华中交付中心"},{n:"周勇",o:"川渝交付中心"},{n:"高旭琴",o:"云动事业部"}],
+   desc:"FCO老客户的实施申请、需求反馈、实施变更、产品灰度均经实施总监审批，但实施总监不掌握老客户实际情况，审批无意义；B类伙伴项目也走实施总监审批，但实施总监不了解伙伴签约情况。",
+   suggest:"1. FCO老客户：取消实施总监审批，增加CSM总监/FCO实施负责人审批。\n2. B类伙伴项目：取消实施总监审批，变更为区域渠道负责人/售前支撑人员。\n3. 整体梳理项目管理对象，完成A类交付伙伴权限授权。"},
+
+  {battle:"第三战场",obj:"实施申请 — 节点合并",type:"流程合并优化",
+   reporters:[{n:"胡雪梦",o:"华东战区交付中心"},{n:"黎雪傲",o:"深圳分公司实施交付部"}],
+   desc:"1. 销售提交数据后还有个销售节点需重复填报，步骤冗余。\n2. 有2个连续节点均为实施总监操作（先审批再分配项目经理），重复低效。\n3. 正常销售订单生成的数据，审批环节仍然过多。",
+   suggest:"1. 合并两个销售节点。\n2. 实施总监的审批与分配项目经理合并为1个节点。\n3. 正常销售订单生成后直接到实施总监分配项目负责人。"},
+
+  {battle:"第三战场",obj:"合同及补充协议 — FCO增购/国际化",type:"冗余审批节点",
+   reporters:[{n:"代航",o:"华中交付中心"},{n:"周勇",o:"川渝交付中心"},{n:"何静",o:"国际销售业务组"}],
+   desc:"FCO增购合同需实施总监评审，但SOW及条款均以FCO意见为准，评审无实际意义；国际化合同补充协议流程中某审批人节点走两遍，财务节点也走两遍，重复审批严重。",
+   suggest:"1. FCO增购合同：取消实施总监审批。\n2. 国际化合同：重新评估重复审批节点，合并；将相关审批人节点变更为何静。"},
+
+  {battle:"第三战场",obj:"外包结算申请",type:"审批人变更",
+   reporters:[{n:"代航",o:"华中交付中心"},{n:"周勇",o:"川渝交付中心"},{n:"李曼",o:"云动事业部"}],
+   desc:"FCO外包结算经过实施总监但不经过CSM总监，实施总监未参与项目，审批无意义；云动小微项目外包每个项目自动发起采购订单，量大，且SOW个性化要求系统无法实现。",
+   suggest:"1. FCO外包结算：增加CSM总监/FCO实施负责人审批节点。\n2. 云动小微项目：外包结算由单项目改为框架协议+月度对账。"},
+
+  {battle:"第三战场",obj:"商机评审 — 实施总监节点",type:"冗余审批节点",
+   reporters:[{n:"黎雪傲",o:"深圳分公司实施交付部"}],
+   desc:"销售发起商机评审时，如果项目后期已基本确认签约或前期需求比较标准，实施总监审批没有实际意义。",
+   suggest:"取消实施总监在商机评审中的审批节点。"},
+
+  {battle:"第三战场",obj:"A+项目外包备案审批流",type:"冗余审批节点",
+   reporters:[{n:"黎雪傲",o:"深圳分公司实施交付部"}],
+   desc:"实施总监发起的外包备案，还需要实施总监再次审批，自己发起自己审批，操作低效。",
+   suggest:"增加分支逻辑：实施总监发起时不经过实施总监审批；其他人发起时需过实施总监审批。"},
+
+  {battle:"第三战场",obj:"项目奖金申请",type:"冗余审批节点",
+   reporters:[{n:"张太叶",o:"实施运营部"}],
+   desc:"部分战区及分公司项目奖金申请流程同时存在实施运营及PMO节点；申请层级不足，至少应到N+2上级。",
+   suggest:"1. 取消实施运营节点。\n2. 项目奖金申请至少流转到N+2上级，排查现有流程。"},
+
+  {battle:"第三战场",obj:"增购提成拆分申请",type:"审批人变更",
+   reporters:[{n:"代航",o:"华中交付中心"},{n:"安春晖",o:"北京分公司"}],
+   desc:"增购提成拆分默认不经过实施总监，实施侧不知晓，可能导致实施挖掘的增购未分配提成。",
+   suggest:"1. 所有在建项目及验收半年内项目的增购提成，经过实施总监审核。\n2. 实施中产生的增购，销售提交时实施侧需收到通知。"},
+
+  {battle:"第三战场",obj:"交付项目预算与执行",type:"冗余审批节点",
+   reporters:[{n:"胡雪梦",o:"华东战区交付中心"}],
+   desc:"项目经理提交交付项目预算与执行后，审批节点仍是项目经理本人，存在自我审批的冗余节点。",
+   suggest:"取消该冗余审批节点，直接流转到上级。"},
+
+  {battle:"第三战场",obj:"工时明细 / 工时填报",type:"冗余审批节点",
+   reporters:[{n:"周勇",o:"川渝交付中心"},{n:"高旭琴",o:"云动事业部"}],
+   desc:"FCO项目实施工时经实施总监审批，实施总监不掌握人员动态，审批无实际意义；当前工时填报操作复杂，效率低。",
+   suggest:"1. 重新评估实施总监在工时审批中的必要性。\n2. 简化工时填报流程，支持按周填写。"},
+
+  {battle:"第三战场",obj:"每刻报销（华中代理商返款）",type:"审批人变更",
+   reporters:[{n:"陈亚涛",o:"华中战区"}],
+   desc:"华中代理商返款审批流程缺少华中渠道负责人审批节点，审批链条不完整。",
+   suggest:"在流程中加上华中渠道贾云哲的审批节点。"},
+
+  {battle:"第三战场",obj:"销售合同 — 必填字段",type:"系统功能缺失",
+   reporters:[{n:"高旭琴",o:"云动事业部"}],
+   desc:"合同签约时需填写授权验收邮箱，该字段为必要信息但流程中未标注为必填项，容易遗漏。",
+   suggest:"将授权验收邮箱在流程中设置为必填项（加星号标注）。"},
+
+  {battle:"第三战场",obj:"资源申请",type:"系统功能缺失",
+   reporters:[{n:"安春晖",o:"北京分公司"}],
+   desc:"销售提交资源申请后，支持人员只有资源申请权限，没有客户访问权限，需单独找销售做客户共享，操作繁琐。",
+   suggest:"1. 支持人员分配后自动加入客户相关团队。\n2. 增加【商机】必填校验。"},
+
+  {battle:"第三战场",obj:"线索录入（云动国际）",type:"流程合并优化",
+   reporters:[{n:"何静",o:"国际销售业务组"}],
+   desc:"新加坡/美国线索录入审批流与云动国际国内同事线索录入审批流不一致，流程较为复杂。",
+   suggest:"调整为与云动国际国内录线索一致的审批流，统一标准。"},
+
+  {battle:"第四战场",obj:"商机2.0 — 老客户增购/续费",type:"冗余审批节点",
+   reporters:[{n:"刘佳",o:"华东战区"},{n:"彭韵婷",o:"华南战区"},{n:"季必云",o:"华东战区"}],
+   desc:"老客户增购/续费商机的新建及赢单审批必要性待考量，流程繁琐；销售合同创建后商机阶段未自动调整为转合同阶段，需手动操作。",
+   suggest:"1. 取消老客户增购/续费商机的新建及赢单审批流程。\n2. 销售合同创建后，商机阶段自动调整为转合同阶段。"},
+
+  {battle:"第四战场",obj:"商机2.0 / 销售订单 — 页面体验",type:"系统功能缺失",
+   reporters:[{n:"季必云",o:"华东战区"}],
+   desc:"增购/续费商机、订单页面字段过多，菜单复杂，操作体验差，影响效率。",
+   suggest:"简化商机、订单页面字段；统一精简CRM菜单内容。"},
+
+  {battle:"第四战场",obj:"商机→报价→合同→订单全链路",type:"流程割裂/手工",
+   reporters:[{n:"季必云",o:"华东战区"}],
+   desc:"商机—报价—合同—订单整个流程链路割裂，手工操作繁琐，大量重复录入。",
+   suggest:"报价自动化：应续明细带出商机明细 → 一键生成报价单 → 支持审批流与标准模板 → 报价产品明细自动带到合同。"},
+
+  {battle:"第四战场",obj:"客户系统升级记录 / 关键文档归集",type:"审批人变更",
+   reporters:[{n:"刘学良",o:"华东战区"}],
+   desc:"归属伙伴经营组和渠道经营组的客户，处理节点挂在总监名下，导致流程需过CSM负责人，实际上无需此节点。",
+   suggest:"归属伙伴经营组和渠道经营组的客户，全部由伙伴作为处理人直接处理，无需再过CSM负责人。"},
+
+  {battle:"第四战场",obj:"客户系统升级记录 — 审批节点数量",type:"冗余审批节点",
+   reporters:[{n:"季必云",o:"华东战区"}],
+   desc:"新版本发布确认审批节点过多，区域部门负责人及CSM审批的必要性待考量。",
+   suggest:"不需要区域部门负责人及CSM审批，减少节点数量。"},
+
+  {battle:"第四战场",obj:"灰度申请",type:"冗余审批节点",
+   reporters:[{n:"刘学良",o:"华东战区"}],
+   desc:"灰度申请流程节点过多，总监/部门负责人审批节点可减少。",
+   suggest:"减少总监/部门负责人审批节点，优化流程层级。"},
+
+  {battle:"第四战场",obj:"开票申请 — 电子发票获取",type:"系统功能缺失",
+   reporters:[{n:"刘佳",o:"华东战区"}],
+   desc:"电子发票审批通过后需去邮箱下载再发给客户，操作繁琐，体验差，效率低。",
+   suggest:"开票申请审批通过后，可在界面直接查询下载发票；同时保留系统自动发送邮件推送给客户的流程。"},
+
+  {battle:"第四战场",obj:"产品下架/更名提示",type:"系统功能缺失",
+   reporters:[{n:"刘佳",o:"华东战区"}],
+   desc:"产品下架或更换名称后，应续明细中无显眼标识提示，续费时容易错漏。",
+   suggest:"产品下架/更换名称后，在应续明细中增加显眼标识。"},
+
+  {battle:"第四战场",obj:"第三方产品到期提醒",type:"提醒/自动化",
+   reporters:[{n:"刘佳",o:"华东战区"}],
+   desc:"客户从纷享侧采购的第三方平台产品（如法大大）到期无提醒也无法查询，导致需等客户业务受影响后才投诉。",
+   suggest:"增加第三方产品到期的查询和提醒功能。"},
+
+  {battle:"第四战场",obj:"CRM新客户提醒",type:"提醒/自动化",
+   reporters:[{n:"刘佳",o:"华东战区"}],
+   desc:"新客户进入FCO经营组之后没有任何提醒功能，容易遗漏跟进。",
+   suggest:"增加新客户进入FCO经营组的提醒通知。"},
+
+  {battle:"第四战场",obj:"企业微信对接申请",type:"提醒/自动化",
+   reporters:[{n:"刘佳",o:"华东战区"}],
+   desc:"企业微信对接申请流程繁琐，且FS提单后经常遗漏企业微信侧的对接申请操作。",
+   suggest:"FS侧下单后自动推送提醒，或触发企业微信对接申请的待办任务。"},
+
+  {battle:"第四战场",obj:"联系人 — 集团多抬头场景",type:"系统功能缺失",
+   reporters:[{n:"季必云",o:"华东战区"}],
+   desc:"集团客户有多个子公司（多抬头）时，续费联系人需针对每个子公司重新新建，逻辑设计不合理，操作量大。",
+   suggest:"优化联系人与多公司的关联逻辑，支持一个联系人关联多个公司抬头。"},
+
+  {battle:"第四战场",obj:"销售订单 — 集团多公司场景",type:"系统功能缺失",
+   reporters:[{n:"季必云",o:"华东战区"}],
+   desc:"集团公司拆分账号给多个子公司使用时，需对每个子公司单独下订单、单独推进续费商机，整体业务场景缺乏系统支撑。",
+   suggest:"整体考虑并优化集团多公司场景下的订单和续费商机处理逻辑。"},
+
+  {battle:"第四战场",obj:"销售线索 — 渠道伙伴直接处理",type:"系统功能缺失",
+   reporters:[{n:"彭韵婷",o:"华南战区"}],
+   desc:"属于渠道的销售线索，目前伙伴无法直接处理跟进，需要经过中间转发。",
+   suggest:"渠道线索开放给下游伙伴直接处理跟进。"},
+
+  {battle:"渠道",obj:"伙伴系统数据集成（销售记录/外勤）",type:"系统功能缺失",
+   reporters:[{n:"汪芷菱",o:"渠道运营部"}],
+   desc:"伙伴自用系统的销售记录及外勤数据未集成到FS系统，形成信息孤岛，数据无法互通。",
+   suggest:"FS系统与伙伴自用系统数据打通，实现数据集成。"},
+
+  {battle:"渠道",obj:"渠道伙伴CRM数据权限",type:"系统功能缺失",
+   reporters:[{n:"汪芷菱",o:"渠道运营部"}],
+   desc:"渠道伙伴在CRM中的商机和客户数据权限管控不清晰，需要整体梳理权限范围。",
+   suggest:"整体梳理并明确渠道伙伴在CRM中的数据权限范围。"},
+
+  {battle:"其他",obj:"AI旗舰版产品功能与计费",type:"其他",
+   reporters:[{n:"陈升妙",o:"广东分公司"}],
+   desc:"AI旗舰版不含客户互动功能，需单独付费；计费方式需通过表格单独测算，与系统内报价不一致，销售操作困难。",
+   suggest:"1. 建议旗舰版包含客户互动能力。\n2. 简化计费方式，与系统报价保持一致。"}
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+const LS_KEY = "approval_local_v2";
+const BASE_TYPES = ["冗余审批节点","流程合并优化","审批人变更","系统功能缺失","流程割裂/手工","提醒/自动化","其他"];
+let customTypes = []; // user-added types
+function allTypes(){ return [...BASE_TYPES, ...customTypes]; }
+const TYPE_BADGE = {
+  "冗余审批节点":"b-red","流程合并优化":"b-amber","审批人变更":"b-purple",
+  "系统功能缺失":"b-blue","流程割裂/手工":"b-teal","提醒/自动化":"b-green","其他":"b-gray"
+};
+const TYPE_COLOR = {
+  "冗余审批节点":"#b5451b","流程合并优化":"#c17f24","审批人变更":"#6c3483",
+  "系统功能缺失":"#1a5276","流程割裂/手工":"#0e6655","提醒/自动化":"#2d6a4f","其他":"#5d6d7e"
+};
+
+let data = RAW.map((r,i)=>({
+  ...r, id:i, isCustom:false,
+  status:"待处理", reason:"",
+  urgent:false, important:false,
+  planText:"", planLinks:[], planFiles:[], planTab:"text",
+  date:"", operators:[]
+}));
+let nextId = data.length;
+let activeTab = "全部";
+let currentView = "dash";
+const BATTLES = [...new Set(RAW.map(r=>r.battle))];
+
+// ══════════════════════════════════════════
+// LOCAL STORAGE
+// ══════════════════════════════════════════
+// ── JSONBin 云存储 ──
+const JB_BIN_ID = "6a05d10ac0954111d821dc94";
+const JB_KEY    = "$2a$10$O1yRF0PTjj2f55SIMajOrujixF7H8w640/4l8vKYdgYVafjGH.HlO";
+const JB_URL    = "https://api.jsonbin.io/v3/b/" + JB_BIN_ID;
+
+async function saveLocal(){
+  const payload = {
+    tracking: data.map(d=>({
+      id:d.id, status:d.status, reason:d.reason,
+      urgent:d.urgent, important:d.important,
+      planText:d.planText, planLinks:d.planLinks, planFiles:d.planFiles,
+      date:d.date, operators:d.operators||[]
+    })),
+    customTypes,
+    custom: data.filter(d=>d.isCustom),
+    lastSavedBy: currentUser||"匿名",
+    lastSavedAt: new Date().toISOString()
+  };
+  try{
+    const res = await fetch(JB_URL, {
+      method: "PUT",
+      headers:{
+        "Content-Type":"application/json",
+        "X-Access-Key": JB_KEY
+      },
+      body: JSON.stringify(payload)
+    });
+    if(!res.ok) throw new Error(await res.text());
+    const el=document.getElementById("saveHint");
+    const t=new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"});
+    el.textContent="● 已同步 "+t+(currentUser?" · "+currentUser:"");
+    el.style.color="#7fb89c";
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(payload)); }catch(e){}
+  } catch(e){
+    console.error("Save failed:", e);
+    const el=document.getElementById("saveHint");
+    el.textContent="● 保存失败，请检查网络";
+    el.style.color="#b5451b";
+    try{ localStorage.setItem(LS_KEY, JSON.stringify(payload)); }catch(e2){}
+  }
+}
+
+async function loadLocal(){
+  try{
+    const res = await fetch(JB_URL+"/latest", {
+      headers:{ "X-Access-Key": JB_KEY }
+    });
+    if(!res.ok) throw new Error(await res.text());
+    const json = await res.json();
+    const p = json.record;
+    if(p && (p.tracking||p.custom)){
+      applyPayload(p);
+      const el=document.getElementById("saveHint");
+      const t=p.lastSavedAt?new Date(p.lastSavedAt).toLocaleString("zh-CN",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+      el.textContent="● 云端已连接"+(p.lastSavedBy&&p.lastSavedBy!=="匿名"?" · 上次:"+p.lastSavedBy+(t?" "+t:""):"");
+      el.style.color="#7fb89c";
+      return;
+    }
+  } catch(e){ console.warn("JSONBin load failed, fallback to localStorage:", e); }
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw) applyPayload(JSON.parse(raw));
+  } catch(e){}
+  const el=document.getElementById("saveHint");
+  el.textContent="● 本地缓存（网络不可用）";
+  el.style.color="#c17f24";
+}
+
+function applyPayload(payload){
+  (payload.tracking||[]).forEach(s=>{
+    const row=data.find(d=>d.id===s.id); if(!row) return;
+    Object.assign(row,{status:s.status||"待处理",reason:s.reason||"",
+      urgent:!!s.urgent,important:!!s.important,
+      planText:s.planText||"",planLinks:s.planLinks||[],
+      planFiles:s.planFiles||[],date:s.date||"",operators:s.operators||[]});
+  });
+  (payload.custom||[]).forEach(c=>{ if(!data.find(d=>d.id===c.id)) data.push(c); });
+  if(data.length) nextId=Math.max(...data.map(d=>d.id))+1;
+  customTypes = payload.customTypes||[];
+}
+
+function startAutoRefresh(){
+  setInterval(async()=>{
+    try{
+      const res = await fetch(JB_URL+"/latest", {
+        headers:{ "X-Access-Key": JB_KEY }
+      });
+      if(!res.ok) return;
+      const json = await res.json();
+      const p = json.record;
+      if(p && (p.tracking||p.custom)){
+        applyPayload(p);
+        buildTabs(); renderAll();
+        if(currentView==="dash") renderDash();
+        if(currentView==="person") renderPerson();
+        if(currentView==="level") renderLevel();
+        const el=document.getElementById("saveHint");
+        const t=p.lastSavedAt?new Date(p.lastSavedAt).toLocaleString("zh-CN",{month:"numeric",day:"numeric",hour:"2-digit",minute:"2-digit"}):"";
+        el.textContent="● 云端已连接"+(p.lastSavedBy&&p.lastSavedBy!=="匿名"?" · 上次:"+p.lastSavedBy+(t?" "+t:""):"");
+        el.style.color="#7fb89c";
+      }
+    }catch(e){}
+  }, 30000);
+}
+
+let saveTimer=null;
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(saveLocal,1500); }
+
+// ══════════════════════════════════════════
+// VIEW SWITCH
+// ══════════════════════════════════════════
+function switchView(v){
+  currentView=v;
+  ["dash","board","person","level"].forEach(n=>{
+    const el=document.getElementById(n+"View");
+    if(el) el.style.display=(v===n?"block":"none");
+    const btn=document.getElementById("vbtn-"+n);
+    if(btn) btn.classList.toggle("active",v===n);
+  });
+  // dashView uses display:block via .active class too — normalise
+  const dv=document.getElementById("dashView");
+  if(dv){ dv.style.display=(v==="dash"?"block":"none"); dv.classList.toggle("active",v==="dash"); }
+  if(v==="dash") renderDash();
+  if(v==="person") renderPerson();
+  if(v==="level") renderLevel();
+}
+
+// ══════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════
+function renderDash(){
+  const t=data.length,pend=data.filter(d=>d.status==="待处理").length,
+    ing=data.filter(d=>d.status==="处理中").length,
+    done=data.filter(d=>d.status==="已完成").length,
+    skip=data.filter(d=>d.status==="无需处理").length,
+    urg=data.filter(d=>d.urgent).length,
+    imp=data.filter(d=>d.important).length,
+    both=data.filter(d=>d.urgent&&d.important).length;
+
+  document.getElementById("summaryGrid").innerHTML=[
+    {n:t,l:"总问题数",sub:"合并同类后",c:"var(--text)"},
+    {n:pend,l:"待处理",sub:`占比 ${Math.round(pend/t*100)}%`,c:"var(--red)"},
+    {n:ing,l:"处理中",sub:`占比 ${Math.round(ing/t*100)}%`,c:"var(--accent2)"},
+    {n:done,l:"已完成",sub:`完成率 ${Math.round(done/t*100)}%`,c:"var(--accent)"},
+    {n:skip,l:"无需处理",sub:"已确认排除",c:"var(--text3)"},
+    {n:urg,l:"紧急问题",sub:`含紧急+重要 ${both}`,c:"var(--urgent)"},
+    {n:imp,l:"重要问题",sub:`含紧急+重要 ${both}`,c:"var(--important)"},
+  ].map(s=>`<div class="scard"><div class="scard-n" style="color:${s.c}">${s.n}</div><div class="scard-l">${s.l}</div><div class="scard-sub">${s.sub}</div></div>`).join("");
+
+  const battles=[...new Set(data.map(d=>d.battle))];
+  document.getElementById("battleRows").innerHTML=battles.map(b=>{
+    const items=data.filter(d=>d.battle===b),tt=items.length;
+    const dn=items.filter(i=>i.status==="已完成").length,
+      in2=items.filter(i=>i.status==="处理中").length,
+      pn=items.filter(i=>i.status==="待处理").length,
+      sk=items.filter(i=>i.status==="无需处理").length,
+      ug=items.filter(i=>i.urgent).length,
+      im=items.filter(i=>i.important).length;
+    const dP=Math.round(dn/tt*100),iP=Math.round(in2/tt*100),pP=Math.round(pn/tt*100);
+    return `<div class="brow">
+      <div class="brow-top">
+        <span class="brow-name">${b}</span>
+        <div class="brow-chips">
+          ${pn?`<span class="chip chip-pend">待处理 ${pn}</span>`:""}
+          ${in2?`<span class="chip chip-ing">处理中 ${in2}</span>`:""}
+          ${dn?`<span class="chip chip-done">已完成 ${dn}</span>`:""}
+          ${sk?`<span class="chip chip-skip">无需处理 ${sk}</span>`:""}
+          ${ug?`<span class="chip chip-urg">🔴紧急 ${ug}</span>`:""}
+          ${im?`<span class="chip chip-imp">🟣重要 ${im}</span>`:""}
+        </div>
+        <span style="font-size:11px;color:var(--text3);min-width:44px;text-align:right">共${tt}条</span>
+      </div>
+      <div class="brow-bar">
+        <div class="bbar-seg" style="background:var(--accent);width:${dP}%"></div>
+        <div class="bbar-seg" style="background:var(--accent2);width:${iP}%"></div>
+        <div class="bbar-seg" style="background:#f0c4b0;width:${pP}%"></div>
+      </div>
+    </div>`;
+  }).join("");
+
+  const prioItems=data.filter(d=>d.urgent||d.important).sort((a,b)=>{
+    const as=(a.urgent&&a.important)?2:a.urgent?1.5:1,bs=(b.urgent&&b.important)?2:b.urgent?1.5:1;
+    return bs-as;
+  });
+  document.getElementById("prioGrid").innerHTML=prioItems.length
+    ?prioItems.map(r=>{
+      const cls=(r.urgent&&r.important)?"c-both":r.urgent?"c-urg":"c-imp";
+      const tags=[r.urgent?`<span style="background:var(--urgent-light);color:var(--urgent);font-size:10px;padding:1px 7px;border-radius:9px;font-weight:600">🔴紧急</span>`:"",
+        r.important?`<span style="background:var(--important-light);color:var(--important);font-size:10px;padding:1px 7px;border-radius:9px;font-weight:600">🟣重要</span>`:""].filter(Boolean).join(" ");
+      const sc="color:"+(r.status==="已完成"?"var(--accent)":r.status==="处理中"?"var(--accent2)":r.status==="无需处理"?"var(--text3)":"var(--red)");
+      return `<div class="pcard ${cls}" onclick="goToItem(${r.id})">
+        <div class="pcard-top"><span class="pcard-obj">${r.obj}</span>${tags}</div>
+        <div class="pcard-meta">${r.battle} · ${r.type}</div>
+        <div class="pcard-desc">${r.desc.replace(/\n[\s\S]*/,"").slice(0,78)}${r.desc.length>78?"…":""}</div>
+        <div class="pcard-status" style="${sc}">● ${r.status}${(r.operators&&r.operators.length)?" · "+r.operators.join("、"):""}</div>
+      </div>`;
+    }).join("")
+    :`<div style="color:var(--text3);font-size:13px;padding:16px 0">暂无标记为重要或紧急的问题 — 在跟进看板中点击标签即可标记</div>`;
+
+  const typeCounts={};
+  data.forEach(d=>{ typeCounts[d.type]=(typeCounts[d.type]||0)+1; });
+  const maxC=Math.max(...Object.values(typeCounts));
+  document.getElementById("typeBars").innerHTML=Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([type,cnt])=>{
+    const pct=Math.round(cnt/t*100),fill=Math.round(cnt/maxC*100),col=TYPE_COLOR[type]||"#5d6d7e";
+    return `<div class="tbar-row">
+      <span class="tbar-lbl">${type}</span>
+      <div class="tbar-bg"><div class="tbar-fill" style="background:${col};width:${fill}%"><span class="tbar-cnt">${cnt}</span></div></div>
+      <span class="tbar-pct">${pct}%</span>
+    </div>`;
+  }).join("");
+}
+
+function goToItem(id){
+  const r=data.find(d=>d.id===id); if(!r) return;
+  activeTab=r.battle; switchView("board"); buildTabs(); renderAll();
+  setTimeout(()=>{ const el=document.getElementById("row-"+id); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },200);
+}
+
+// ══════════════════════════════════════════
+// BOARD
+// ══════════════════════════════════════════
+function buildTabs(){
+  const all=["全部",...new Set(data.map(d=>d.battle))];
+  document.getElementById("tabs").innerHTML=all.map(b=>{
+    const cnt=b==="全部"?data.length:data.filter(d=>d.battle===b).length;
+    return `<div class="tab${b===activeTab?" active":""}" onclick="switchTab('${b}')">${b}<span class="tab-n">${cnt}</span></div>`;
+  }).join("");
+}
+function switchTab(b){ activeTab=b; buildTabs(); renderAll(); }
+
+function getFiltered(){
+  const q=(document.getElementById("q")||{}).value||"",
+    fT=(document.getElementById("fType")||{}).value||"",
+    fS=(document.getElementById("fStatus")||{}).value||"",
+    fP=(document.getElementById("fPrio")||{}).value||"";
+  return data.filter(r=>{
+    if(activeTab!=="全部"&&r.battle!==activeTab) return false;
+    if(fT&&r.type!==fT) return false;
+    if(fS&&r.status!==fS) return false;
+    if(fP==="urgent"&&!r.urgent) return false;
+    if(fP==="important"&&!r.important) return false;
+    if(fP==="both"&&!(r.urgent&&r.important)) return false;
+    if(q){ const s=q.toLowerCase(),reps=r.reporters.map(x=>x.n+x.o).join(" ");
+      if(![r.obj,r.desc,r.suggest,r.type,r.battle,reps].some(x=>x.toLowerCase().includes(s))) return false; }
+    return true;
+  });
+}
+
+function renderAll(){
+  const rows=getFiltered();
+  document.getElementById("rcnt").textContent=rows.length+" 条";
+  const page=document.getElementById("mainPage"),grouped={};
+  rows.forEach(r=>{ if(!grouped[r.battle]) grouped[r.battle]=[]; grouped[r.battle].push(r); });
+  if(!Object.keys(grouped).length){ page.innerHTML='<div class="empty-msg">没有匹配的记录</div>'; return; }
+  page.innerHTML=Object.entries(grouped).map(([battle,items])=>{
+    const dn=items.filter(i=>i.status==="已完成").length,ug=items.filter(i=>i.urgent).length;
+    return `<div class="group open" id="grp-${battle.replace(/\W/g,"_")}">
+      <div class="group-hd" onclick="toggleGroup(this)">
+        <span class="chevron">▶</span>
+        <span class="group-title">${battle}</span>
+        <span class="group-meta">
+          <span>${items.length}条</span>
+          <span style="color:var(--accent)">完成 ${dn}/${items.length}</span>
+          ${ug?`<span style="color:var(--urgent)">🔴紧急 ${ug}</span>`:""}
+        </span>
+      </div>
+      <div class="group-body">
+        <div class="tbl-wrap"><table>
+          <thead><tr>
+            <th style="width:28px">#</th>
+            <th style="width:112px">流程对象</th>
+            <th style="width:86px">问题类型</th>
+            <th style="width:68px">优先级</th>
+            <th style="width:116px">提报人</th>
+            <th style="min-width:195px">问题描述</th>
+            <th style="min-width:165px">修改建议</th>
+            <th style="width:100px">处理状态</th>
+            <th style="min-width:220px">处理方案</th>
+            <th style="width:130px">计划完成时间</th>
+            <th style="width:72px">经办人</th>
+            <th style="width:46px"></th>
+          </tr></thead>
+          <tbody>${items.map((r,i)=>renderRow(r,i+1)).join("")}</tbody>
+        </table></div>
+      </div>
+      <div class="group-add">
+        <button class="gadd-btn" onclick="openAddModal('${battle}')">＋ 在「${battle}」下新增问题</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleGroup(hd){ hd.closest(".group").classList.toggle("open"); }
+
+function renderRow(r,idx){
+  const reps=r.reporters.map(x=>`<span class="rep-tag">${x.n}<span style="color:var(--text3);font-size:10px"> ${x.o}</span></span>`).join(" ");
+  const linksH=r.planLinks.map((l,li)=>`<div class="link-item"><a href="${l.url}" target="_blank">${l.label}</a><span class="xbtn" onclick="delLink(${r.id},${li})">✕</span></div>`).join("");
+  const filesH=r.planFiles.map((f,fi)=>`<div class="file-item"><span class="file-nm">${f.name}</span><span class="xbtn" onclick="delFile(${r.id},${fi})">✕</span></div>`).join("");
+  const reasonH=r.status==="无需处理"?`<div class="reason-wrap"><div class="reason-lbl">* 请填写无需处理的理由</div><textarea class="reason-ta" rows="2" placeholder="请说明原因…" onchange="setF(${r.id},'reason',this.value)">${r.reason}</textarea></div>`:"";
+  const tab=r.planTab||"text";
+  const sClass={"待处理":"s1","处理中":"s2","已完成":"s3","无需处理":"s4"}[r.status]||"s1";
+  const typeOpts=allTypes();
+  const typeSelectOpts=typeOpts.map(t=>`<option value="${t}"${r.type===t?" selected":""}>${t}</option>`).join("")
+    + `<option value="__add_new__" style="color:var(--accent);font-style:italic">＋ 新增类型…</option>`;
+  return `<tr id="row-${r.id}">
+    <td style="color:var(--text3);font-size:11px;text-align:center">${idx}</td>
+    <td>
+      <div class="edit-field-wrap" onclick="startEdit(event,${r.id},'obj')" title="点击编辑">
+        <span class="edit-display" id="disp-obj-${r.id}" style="font-size:12px;font-weight:500;line-height:1.5;cursor:pointer">${r.obj}</span>
+        <input class="edit-input" id="inp-obj-${r.id}" type="text" value="${r.obj.replace(/"/g,'&quot;')}" style="display:none;font-size:12px;font-weight:500;width:100%;min-width:100px" onblur="commitEdit(${r.id},'obj',this.value)" onkeydown="if(event.key==='Enter')this.blur();if(event.key==='Escape')cancelEdit(${r.id},'obj')">
+      </div>
+    </td>
+    <td>
+      <select class="editable-badge ${TYPE_BADGE[r.type]||'b-gray'}" onchange="setFAndRefreshBadge(${r.id},'type',this)">
+        ${typeSelectOpts}
+      </select>
+    </td>
+    <td>
+      <div class="prio-wrap">
+        <span class="ptag ${r.urgent?"ptag-urg-on":"ptag-urg-off"}" onclick="togglePrio(${r.id},'urgent')" title="点击切换">🔴 紧急</span>
+        <span class="ptag ${r.important?"ptag-imp-on":"ptag-imp-off"}" onclick="togglePrio(${r.id},'important')" title="点击切换">🟣 重要</span>
+      </div>
+    </td>
+    <td><div style="line-height:1.8">${reps}</div></td>
+    <td style="max-width:195px">
+      <div class="edit-field-wrap" onclick="startEditTA(event,${r.id},'desc')" title="点击编辑">
+        <div class="edit-display" id="disp-desc-${r.id}" style="font-size:12px;line-height:1.6;cursor:pointer;white-space:pre-wrap">${r.desc}</div>
+        <textarea class="edit-ta" id="inp-desc-${r.id}" style="display:none;font-size:12px;width:100%;min-width:160px;min-height:80px" onblur="commitEdit(${r.id},'desc',this.value)" onkeydown="if(event.key==='Escape')cancelEditTA(${r.id},'desc')">${r.desc}</textarea>
+      </div>
+    </td>
+    <td style="max-width:165px">
+      <div class="edit-field-wrap" onclick="startEditTA(event,${r.id},'suggest')" title="点击编辑">
+        <div class="edit-display" id="disp-suggest-${r.id}" style="font-size:12px;line-height:1.6;cursor:pointer;color:var(--text2);white-space:pre-wrap">${r.suggest}</div>
+        <textarea class="edit-ta" id="inp-suggest-${r.id}" style="display:none;font-size:12px;width:100%;min-width:160px;min-height:80px" onblur="commitEdit(${r.id},'suggest',this.value)" onkeydown="if(event.key==='Escape')cancelEditTA(${r.id},'suggest')">${r.suggest}</textarea>
+      </div>
+    </td>
+    <td>
+      <select class="ss ${sClass}" onchange="onStatusChange(${r.id},this)">
+        ${["待处理","处理中","已完成","无需处理"].map(s=>`<option${r.status===s?" selected":""}>${s}</option>`).join("")}
+      </select>
+      ${reasonH}
+    </td>
+    <td class="plan-cell">
+      <div class="plan-tabs">
+        <div class="ptb${tab==="text"?" active":""}" onclick="switchPlanTab(${r.id},'text',this)">✏ 文字</div>
+        <div class="ptb${tab==="link"?" active":""}" onclick="switchPlanTab(${r.id},'link',this)">🔗 链接</div>
+        <div class="ptb${tab==="file"?" active":""}" onclick="switchPlanTab(${r.id},'file',this)">📄 附件</div>
+      </div>
+      <div class="plan-area${tab==="text"?" active":""}" id="pt-text-${r.id}">
+        <textarea class="plan-ta" rows="3" placeholder="填写处理方案…" onchange="setF(${r.id},'planText',this.value)">${r.planText}</textarea>
+      </div>
+      <div class="plan-area${tab==="link"?" active":""}" id="pt-link-${r.id}">
+        <div class="link-row">
+          <input class="link-inp" type="text" id="linkin-${r.id}" placeholder="粘贴文档链接…">
+          <button class="add-btn" onclick="addLink(${r.id})">+添加</button>
+        </div>
+        <div class="link-list" id="links-${r.id}">${linksH}</div>
+      </div>
+      <div class="plan-area${tab==="file"?" active":""}" id="pt-file-${r.id}">
+        <div class="drop-zone" onclick="document.getElementById('fi-${r.id}').click()"
+          ondragover="event.preventDefault();this.classList.add('over')"
+          ondragleave="this.classList.remove('over')"
+          ondrop="handleDrop(event,${r.id})">
+          <div class="drop-lbl">点击或拖拽上传文档</div>
+          <div class="drop-sub">Word / PDF / 图片，≤5MB</div>
+        </div>
+        <input type="file" style="display:none" id="fi-${r.id}" multiple onchange="handleFileIn(event,${r.id})">
+        <div class="file-list" id="files-${r.id}" style="margin-top:4px">${filesH}</div>
+      </div>
+    </td>
+    <td><input type="date" class="di" value="${r.date}" onchange="setF(${r.id},'date',this.value)"></td>
+    <td class="op-cell" id="opcell-${r.id}">
+      ${renderOperators(r)}
+    </td>
+    <td>${r.isCustom?`<button class="del-btn" onclick="deleteRow(${r.id})">删除</button>`:`<span style="font-size:10px;color:var(--border2)">原始</span>`}</td>
+  </tr>`;
+}
+
+
+// ── INLINE EDIT HELPERS ──
+function startEdit(e,id,field){
+  e.stopPropagation();
+  const disp=document.getElementById('disp-'+field+'-'+id);
+  const inp=document.getElementById('inp-'+field+'-'+id);
+  if(!disp||!inp) return;
+  disp.style.display='none';
+  inp.style.display='block';
+  inp.focus(); inp.select();
+}
+function cancelEdit(id,field){
+  const row=data.find(d=>d.id===id);
+  const disp=document.getElementById('disp-'+field+'-'+id);
+  const inp=document.getElementById('inp-'+field+'-'+id);
+  if(!disp||!inp||!row) return;
+  inp.value=row[field];
+  inp.style.display='none';
+  disp.style.display='';
+}
+function startEditTA(e,id,field){
+  e.stopPropagation();
+  const disp=document.getElementById('disp-'+field+'-'+id);
+  const inp=document.getElementById('inp-'+field+'-'+id);
+  if(!disp||!inp) return;
+  disp.style.display='none';
+  inp.style.display='block';
+  inp.style.height=Math.max(80,inp.scrollHeight)+'px';
+  inp.focus();
+}
+function cancelEditTA(id,field){
+  const row=data.find(d=>d.id===id);
+  const disp=document.getElementById('disp-'+field+'-'+id);
+  const inp=document.getElementById('inp-'+field+'-'+id);
+  if(!disp||!inp||!row) return;
+  inp.value=row[field];
+  inp.style.display='none';
+  disp.style.display='';
+}
+function commitEdit(id,field,val){
+  const row=data.find(d=>d.id===id);
+  const disp=document.getElementById('disp-'+field+'-'+id);
+  const inp=document.getElementById('inp-'+field+'-'+id);
+  if(!row||!disp||!inp) return;
+  row[field]=val;
+  // update display
+  if(field==='obj'){
+    disp.textContent=val;
+  } else {
+    disp.textContent=val;
+  }
+  inp.style.display='none';
+  disp.style.display='';
+  scheduleSave();
+}
+function setFAndRefreshBadge(id,field,selectEl){
+  const val=selectEl.value;
+  if(val==="__add_new__"){
+    const nm=prompt("请输入新问题类型名称：","");
+    if(nm&&nm.trim()){
+      addCustomType(nm.trim());
+      rebuildTypeFilter();
+      // re-render the row's type select to include new type
+      const row=data.find(d=>d.id===id); if(!row) return;
+      row[field]=nm.trim();
+      selectEl.value=nm.trim();
+      if(!TYPE_BADGE[nm.trim()]) TYPE_BADGE[nm.trim()]="b-amber";
+      selectEl.className='editable-badge '+(TYPE_BADGE[nm.trim()]||'b-gray');
+      // refresh options in this select
+      refreshTypeSelect(selectEl, nm.trim());
+      scheduleSave();
+    } else {
+      // revert select
+      const row=data.find(d=>d.id===id); if(row) selectEl.value=row[field];
+    }
+    return;
+  }
+  const row=data.find(d=>d.id===id); if(!row) return;
+  row[field]=val;
+  selectEl.className='editable-badge '+(TYPE_BADGE[val]||'b-gray');
+  scheduleSave();
+}
+
+function refreshTypeSelect(sel, selectedVal){
+  const cur=selectedVal||sel.value;
+  sel.innerHTML=allTypes().map(t=>`<option value="${t}"${t===cur?" selected":""}>${t}</option>`).join("")
+    + `<option value="__add_new__" style="color:var(--accent);font-style:italic">＋ 新增类型…</option>`;
+  sel.className='editable-badge '+(TYPE_BADGE[cur]||'b-gray');
+}
+
+
+// ══════════════════════════════════════════
+// OPERATORS (multi-person)
+// ══════════════════════════════════════════
+function renderOperators(r){
+  const tags=(r.operators||[]).map((n,i)=>
+    `<span class="op-tag">${n}<span class="op-tag-del" onclick="removeOperator(${r.id},${i})" title="移除">×</span></span>`
+  ).join("");
+  return `<div class="op-tags" id="optags-${r.id}">${tags}</div>
+    <div class="op-add-row">
+      <input class="op-add-inp" type="text" id="opinp-${r.id}" placeholder="添加…"
+        onkeydown="if(event.key==='Enter'){addOperator(${r.id});event.preventDefault()}"
+        maxlength="10">
+      <button class="op-add-btn" onclick="addOperator(${r.id})">+</button>
+    </div>`;
+}
+
+function addOperator(id){
+  const inp=document.getElementById("opinp-"+id);
+  if(!inp) return;
+  const name=inp.value.trim(); if(!name) return;
+  const row=data.find(d=>d.id===id); if(!row) return;
+  if(!row.operators) row.operators=[];
+  if(row.operators.includes(name)){ inp.value=""; return; }
+  row.operators.push(name);
+  inp.value="";
+  refreshOperators(id);
+  scheduleSave();
+}
+
+function removeOperator(id,idx){
+  const row=data.find(d=>d.id===id); if(!row) return;
+  row.operators.splice(idx,1);
+  refreshOperators(id);
+  scheduleSave();
+}
+
+function refreshOperators(id){
+  const row=data.find(d=>d.id===id);
+  const cell=document.getElementById("opcell-"+id); if(!cell) return;
+  cell.innerHTML=renderOperators(row);
+}
+
+// ══════════════════════════════════════════
+// CUSTOM TYPES
+// ══════════════════════════════════════════
+function addCustomType(name){
+  name=name.trim();
+  if(!name||allTypes().includes(name)) return false;
+  customTypes.push(name);
+  // give it a default color class
+  TYPE_BADGE[name]="b-amber";
+  TYPE_COLOR[name]="#c17f24";
+  scheduleSave();
+  return true;
+}
+
+function removeCustomType(name){
+  customTypes=customTypes.filter(t=>t!==name);
+  // if any row uses this type, revert to 其他
+  data.forEach(d=>{ if(d.type===name) d.type="其他"; });
+  scheduleSave();
+  rebuildTypeFilter();
+  renderAll();
+}
+
+function rebuildTypeFilter(){
+  const sel=document.getElementById("fType"); if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML='<option value="">全部</option>';
+  allTypes().forEach(t=>{ const o=document.createElement("option"); o.value=t; o.text=t; if(t===cur) o.selected=true; sel.appendChild(o); });
+}
+
+// ══════════════════════════════════════════
+// FIELD UPDATES
+// ══════════════════════════════════════════
+function setF(id,field,val){
+  const row=data.find(d=>d.id===id); if(!row) return;
+  row[field]=val; scheduleSave();
+}
+
+function togglePrio(id,field){
+  const row=data.find(d=>d.id===id); if(!row) return;
+  row[field]=!row[field];
+  const tr=document.getElementById("row-"+id); if(!tr) return;
+  tr.cells[3].innerHTML=`<div class="prio-wrap">
+    <span class="ptag ${row.urgent?"ptag-urg-on":"ptag-urg-off"}" onclick="togglePrio(${id},'urgent')" title="点击切换">🔴 紧急</span>
+    <span class="ptag ${row.important?"ptag-imp-on":"ptag-imp-off"}" onclick="togglePrio(${id},'important')" title="点击切换">🟣 重要</span>
+  </div>`;
+  scheduleSave();
+  if(currentView==="dash") renderDash();
+}
+
+function onStatusChange(id,el){
+  const row=data.find(d=>d.id===id); if(!row) return;
+  row.status=el.value;
+  const sClass={"待处理":"s1","处理中":"s2","已完成":"s3","无需处理":"s4"}[el.value]||"s1";
+  el.className="ss "+sClass;
+  const tr=document.getElementById("row-"+id);
+  let rw=tr.querySelector(".reason-wrap");
+  if(el.value==="无需处理"){
+    if(!rw){ const d=document.createElement("div"); d.className="reason-wrap";
+      d.innerHTML=`<div class="reason-lbl">* 请填写无需处理的理由</div><textarea class="reason-ta" rows="2" placeholder="请说明原因…" onchange="setF(${id},'reason',this.value)">${row.reason}</textarea>`;
+      el.parentNode.appendChild(d); }
+  } else { if(rw) rw.remove(); row.reason=""; }
+  scheduleSave();
+  if(currentView==="dash") renderDash();
+}
+
+function switchPlanTab(id,tab,el){
+  const row=data.find(d=>d.id===id); if(row) row.planTab=tab;
+  const tr=document.getElementById("row-"+id);
+  tr.querySelectorAll(".ptb").forEach(t=>t.classList.remove("active")); el.classList.add("active");
+  ["text","link","file"].forEach(t=>{ const a=document.getElementById("pt-"+t+"-"+id); if(a) a.classList.toggle("active",t===tab); });
+}
+
+function addLink(id){
+  const inp=document.getElementById("linkin-"+id); let url=inp.value.trim(); if(!url) return;
+  if(!url.startsWith("http")) url="https://"+url;
+  const row=data.find(d=>d.id===id);
+  row.planLinks.push({label:url.length>43?url.slice(0,43)+"…":url,url}); inp.value="";
+  refreshLinks(id); scheduleSave();
+}
+function delLink(id,li){ const row=data.find(d=>d.id===id); row.planLinks.splice(li,1); refreshLinks(id); scheduleSave(); }
+function refreshLinks(id){
+  const row=data.find(d=>d.id===id),el=document.getElementById("links-"+id); if(!el) return;
+  el.innerHTML=row.planLinks.map((l,li)=>`<div class="link-item"><a href="${l.url}" target="_blank">${l.label}</a><span class="xbtn" onclick="delLink(${id},${li})">✕</span></div>`).join("");
+}
+
+function handleFileIn(ev,id){ processFiles(Array.from(ev.target.files),id); }
+function handleDrop(ev,id){ ev.preventDefault(); ev.currentTarget.classList.remove("over"); processFiles(Array.from(ev.dataTransfer.files),id); }
+function processFiles(files,id){
+  const row=data.find(d=>d.id===id);
+  files.forEach(f=>{
+    if(f.size>5*1024*1024){ showToast("文件 "+f.name+" 超过5MB限制","err"); return; }
+    const reader=new FileReader();
+    reader.onload=e=>{ row.planFiles.push({name:f.name,dataUrl:e.target.result}); refreshFiles(id); scheduleSave(); };
+    reader.readAsDataURL(f);
+  });
+}
+function delFile(id,fi){ const row=data.find(d=>d.id===id); row.planFiles.splice(fi,1); refreshFiles(id); scheduleSave(); }
+function refreshFiles(id){
+  const row=data.find(d=>d.id===id),el=document.getElementById("files-"+id); if(!el) return;
+  el.innerHTML=row.planFiles.map((f,fi)=>`<div class="file-item"><span class="file-nm">${f.name}</span><span class="xbtn" onclick="delFile(${id},${fi})">✕</span></div>`).join("");
+}
+
+function deleteRow(id){
+  if(!confirm("确认删除此条问题？（仅限自行新增的记录，删除后不可恢复）")) return;
+  data=data.filter(d=>d.id!==id); buildTabs(); renderAll(); scheduleSave(); showToast("已删除");
+}
+
+// ══════════════════════════════════════════
+// ADD MODAL
+// ══════════════════════════════════════════
+function openAddModal(battle){
+  document.getElementById("modalTitle").textContent="新增问题反馈";
+  document.getElementById("m-battle").value=battle||"";
+  ["m-type","m-obj","m-reporters","m-desc","m-suggest"].forEach(id=>document.getElementById(id).value="");
+  document.getElementById("m-urgent").checked=false;
+  document.getElementById("m-important").checked=false;
+  document.getElementById("addModal").classList.add("open");
+}
+function closeAddModal(){ document.getElementById("addModal").classList.remove("open"); }
+
+function submitModal(){
+  const battle=document.getElementById("m-battle").value.trim(),
+    type=document.getElementById("m-type").value.trim(),
+    obj=document.getElementById("m-obj").value.trim(),
+    reporterStr=document.getElementById("m-reporters").value.trim(),
+    desc=document.getElementById("m-desc").value.trim(),
+    suggest=document.getElementById("m-suggest").value.trim();
+  if(!battle||!type||!obj||!reporterStr||!desc){ showToast("请填写所有必填项（标*的字段）","err"); return; }
+  const reporters=reporterStr.split(/[,，]/).map(s=>{
+    s=s.trim(); const m=s.match(/^(.+?)[\(（](.+)[\)）]$/);
+    return m?{n:m[1].trim(),o:m[2].trim()}:{n:s,o:""};
+  });
+  const nr={id:nextId++,isCustom:true,battle,obj,type,reporters,desc,suggest,
+    status:"待处理",reason:"",urgent:document.getElementById("m-urgent").checked,
+    important:document.getElementById("m-important").checked,
+    planText:"",planLinks:[],planFiles:[],planTab:"text",date:"",operators:[]};
+  data.push(nr);
+  if(!BATTLES.includes(battle)) BATTLES.push(battle);
+  closeAddModal(); activeTab=battle; buildTabs(); renderAll(); scheduleSave();
+  showToast("问题已新增","ok");
+  if(currentView==="dash") renderDash();
+  setTimeout(()=>{ const el=document.getElementById("row-"+nr.id); if(el) el.scrollIntoView({behavior:"smooth",block:"center"}); },250);
+}
+
+// ══════════════════════════════════════════
+// EXPORT
+// ══════════════════════════════════════════
+function exportCSV(){
+  const h=["战场","流程对象","问题类型","紧急","重要","提报人","问题描述","修改建议","处理状态","无需处理理由","处理方案（文字）","处理方案（链接）","处理方案（附件数）","计划完成时间","经办人（多人）"];
+  const rows=data.map(r=>[r.battle,r.obj,r.type,r.urgent?"是":"否",r.important?"是":"否",
+    r.reporters.map(x=>x.n).join("、"),r.desc,r.suggest,r.status,r.reason,
+    r.planText,r.planLinks.map(l=>l.url).join(" | "),r.planFiles.length,r.date,(r.operators||[]).join("、")
+  ].map(v=>'"'+(v||"").toString().replace(/"/g,'""')+'"').join(","));
+  const csv="\uFEFF"+[h.join(","),...rows].join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));
+  a.download="审批流程反馈跟进_"+new Date().toISOString().slice(0,10)+".csv";
+  a.click(); showToast("CSV 文件已导出");
+}
+
+// ══════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════
+function showToast(msg,type=""){
+  const t=document.getElementById("toast"); t.textContent=msg; t.className="toast show "+(type||"");
+  setTimeout(()=>t.className="toast",3000);
+}
+
+
+// ══════════════════════════════════════════
+// PERSON VIEW
+// ══════════════════════════════════════════
+function getAvatarColor(name){
+  const colors=["#2d6a4f","#1a5276","#6c3483","#b5451b","#0e6655","#c17f24","#5d6d7e","#7d3c98"];
+  let h=0; for(let i=0;i<name.length;i++) h=(h*31+name.charCodeAt(i))%colors.length;
+  return colors[Math.abs(h)%colors.length];
+}
+
+function renderPerson(){
+  // Build person map: operator -> items
+  const map={};
+  data.forEach(d=>{
+    const ops=(d.operators||[]).filter(x=>x.trim());
+    if(ops.length===0){ ops.push("__未分配__"); }
+    ops.forEach(op=>{ if(!map[op]) map[op]=[]; map[op].push(d); });
+
+  });
+
+  // Overview cards
+  const cardHtml = Object.entries(map).sort((a,b)=>{
+    if(a[0]==="__未分配__") return 1;
+    if(b[0]==="__未分配__") return -1;
+    return a[0].localeCompare(b[0],"zh");
+  }).map(([op,items])=>{
+    const isUnassigned = op==="__未分配__";
+    const name = isUnassigned?"未分配":"";
+    const t=items.length,dn=items.filter(i=>i.status==="已完成").length,
+      ing=items.filter(i=>i.status==="处理中").length,
+      pend=items.filter(i=>i.status==="待处理").length,
+      skip=items.filter(i=>i.status==="无需处理").length,
+      urg=items.filter(i=>i.urgent).length;
+    const dP=t?Math.round(dn/t*100):0;
+    const col=isUnassigned?"var(--text3)":getAvatarColor(op);
+    const initials=isUnassigned?"?":op.slice(0,1);
+    return `<div class="p-card${isUnassigned?" p-unassigned":""}" onclick="scrollToPersonGroup('pg-${op.replace(/\W/g,"_")}')">
+      <div class="p-card-top">
+        <div class="p-avatar" style="background:${col}">${initials}</div>
+        <div class="p-name">${isUnassigned?"未分配":op}</div>
+      </div>
+      <div class="p-stats">
+        ${pend?`<span class="p-stat chip-pend">待处理 ${pend}</span>`:""}
+        ${ing?`<span class="p-stat chip-ing">处理中 ${ing}</span>`:""}
+        ${dn?`<span class="p-stat chip-done">已完成 ${dn}</span>`:""}
+        ${skip?`<span class="p-stat chip-skip">无需 ${skip}</span>`:""}
+        ${urg?`<span class="p-stat chip-urg">🔴 ${urg}</span>`:""}
+      </div>
+      <div class="p-bar-bg">
+        <div class="p-bar-seg" style="background:var(--accent);width:${dP}%"></div>
+        <div class="p-bar-seg" style="background:var(--accent2);width:${t?Math.round(ing/t*100):0}%"></div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:4px">完成率 ${dP}% · 共${t}条</div>
+    </div>`;
+  }).join("");
+  document.getElementById("personOverview").innerHTML=`<div class="person-cards">${cardHtml}</div>`;
+
+  // Detail groups
+  const detailHtml = Object.entries(map).sort((a,b)=>{
+    if(a[0]==="__未分配__") return 1;
+    if(b[0]==="__未分配__") return -1;
+    return a[0].localeCompare(b[0],"zh");
+  }).map(([op,items])=>{
+    const isUnassigned = op==="__未分配__";
+    const dispName = isUnassigned?"未分配":op;
+    const col = isUnassigned?"var(--text3)":getAvatarColor(op);
+    const t=items.length,dn=items.filter(i=>i.status==="已完成").length;
+    const urg=items.filter(i=>i.urgent).length,imp=items.filter(i=>i.important).length;
+    const gid="pg-"+op.replace(/\W/g,"_");
+    const rows = items.sort((a,b)=>{
+      const pa=(a.urgent&&a.important)?0:a.urgent?1:a.important?2:3;
+      const pb=(b.urgent&&b.important)?0:b.urgent?1:b.important?2:3;
+      return pa-pb;
+    }).map((r,i)=>{
+      const sc={"待处理":"var(--red)","处理中":"var(--accent2)","已完成":"var(--accent)","无需处理":"var(--text3)"}[r.status]||"var(--text)";
+      const ptags=[r.urgent?`<span style="background:var(--urgent-light);color:var(--urgent);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600">🔴紧急</span>`:"",
+        r.important?`<span style="background:var(--important-light);color:var(--important);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600">🟣重要</span>`:""].filter(Boolean).join(" ");
+      return `<div class="level-row">
+        <div class="lr-num">${i+1}</div>
+        <div class="lr-main">
+          <div class="lr-obj">${r.obj} <span style="font-size:10px;color:var(--text3)">· ${r.battle}</span></div>
+          <div class="lr-meta">${r.type} ${ptags}</div>
+          <div class="lr-desc">${r.desc.split("\n")[0].slice(0,80)}${r.desc.length>80?"…":""}</div>
+        </div>
+        <div class="lr-right">
+          <span style="font-size:12px;font-weight:500;color:${sc}">● ${r.status}</span>
+          ${r.date?`<span style="font-size:11px;color:var(--text3)">${r.date}</span>`:""}
+          ${r.planText?`<span style="font-size:10px;color:var(--accent)">✓ 有方案</span>`:"<span style='font-size:10px;color:var(--text3)'>暂无方案</span>"}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="person-group open" id="${gid}">
+      <div class="pg-hd" onclick="this.closest('.person-group').classList.toggle('open')">
+        <span class="pg-chev chevron">▶</span>
+        <div class="p-avatar" style="background:${col};width:22px;height:22px;font-size:10px">${isUnassigned?"?":op.slice(0,1)}</div>
+        <span class="group-title">${dispName}</span>
+        <span class="group-meta">
+          <span>${t}条</span>
+          <span style="color:var(--accent)">完成 ${dn}/${t}</span>
+          ${urg?`<span style="color:var(--urgent)">🔴${urg}</span>`:""}
+          ${imp?`<span style="color:var(--important)">🟣${imp}</span>`:""}
+        </span>
+      </div>
+      <div class="pg-body">${rows}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("personDetail").innerHTML=detailHtml;
+}
+
+function scrollToPersonGroup(id){
+  const el=document.getElementById(id);
+  if(el){ el.classList.add("open"); el.scrollIntoView({behavior:"smooth",block:"start"}); }
+}
+
+// ══════════════════════════════════════════
+// LEVEL VIEW
+// ══════════════════════════════════════════
+function renderLevel(){
+  // 四象限：P1=紧急+重要 P2=重要不紧急 P3=紧急不重要 P4=普通
+  const p1=data.filter(d=>d.urgent&&d.important);
+  const p2=data.filter(d=>!d.urgent&&d.important);
+  const p3=data.filter(d=>d.urgent&&!d.important);
+  const p4=data.filter(d=>!d.urgent&&!d.important);
+
+  function miniChips(items){
+    const pend=items.filter(i=>i.status==="待处理").length,
+      ing=items.filter(i=>i.status==="处理中").length,
+      dn=items.filter(i=>i.status==="已完成").length;
+    return [pend?`<span class="chip chip-pend" style="font-size:10px">待处理 ${pend}</span>`:"",
+      ing?`<span class="chip chip-ing" style="font-size:10px">处理中 ${ing}</span>`:"",
+      dn?`<span class="chip chip-done" style="font-size:10px">已完成 ${dn}</span>`:""].filter(Boolean).join("");
+  }
+
+  document.getElementById("levelMatrix").innerHTML=`
+    <div class="matrix">
+      <div class="quad quad-p1" onclick="scrollToLevelGroup('lg-p1')" style="cursor:pointer">
+        <div class="quad-label">P1 · 立即处理</div>
+        <div class="quad-title" style="color:var(--urgent)">🔴 紧急 + 重要</div>
+        <div class="quad-sub">优先级最高，需立即跟进</div>
+        <div class="quad-cnt" style="color:var(--urgent)">${p1.length}</div>
+        <div class="quad-chips">${miniChips(p1)}</div>
+      </div>
+      <div class="quad quad-p2" onclick="scrollToLevelGroup('lg-p2')" style="cursor:pointer">
+        <div class="quad-label">P2 · 计划处理</div>
+        <div class="quad-title" style="color:var(--important)">🟣 重要 不紧急</div>
+        <div class="quad-sub">重要但可排期推进</div>
+        <div class="quad-cnt" style="color:var(--important)">${p2.length}</div>
+        <div class="quad-chips">${miniChips(p2)}</div>
+      </div>
+      <div class="quad quad-p3" onclick="scrollToLevelGroup('lg-p3')" style="cursor:pointer">
+        <div class="quad-label">P3 · 快速响应</div>
+        <div class="quad-title" style="color:var(--accent2)">🟡 紧急 不重要</div>
+        <div class="quad-sub">时效性强，可委托他人</div>
+        <div class="quad-cnt" style="color:var(--accent2)">${p3.length}</div>
+        <div class="quad-chips">${miniChips(p3)}</div>
+      </div>
+      <div class="quad quad-p4" onclick="scrollToLevelGroup('lg-p4')" style="cursor:pointer">
+        <div class="quad-label">P4 · 常规推进</div>
+        <div class="quad-title" style="color:var(--text2)">⚪ 普通问题</div>
+        <div class="quad-sub">按计划正常处理</div>
+        <div class="quad-cnt" style="color:var(--text2)">${p4.length}</div>
+        <div class="quad-chips">${miniChips(p4)}</div>
+      </div>
+    </div>`;
+
+  const groups=[
+    {id:"lg-p1",cls:"lv1",label:"P1 — 紧急 + 重要",tag:"立即处理",color:"var(--urgent)",items:p1},
+    {id:"lg-p2",cls:"lv2",label:"P2 — 重要 不紧急",tag:"计划处理",color:"var(--important)",items:p2},
+    {id:"lg-p3",cls:"lv3",label:"P3 — 紧急 不重要",tag:"快速响应",color:"var(--accent2)",items:p3},
+    {id:"lg-p4",cls:"lv4",label:"P4 — 普通问题",tag:"常规推进",color:"var(--text2)",items:p4},
+  ];
+
+  document.getElementById("levelList").innerHTML=groups.map(g=>{
+    if(!g.items.length) return `<div class="level-group ${g.cls}" id="${g.id}">
+      <div class="lg-hd"><span class="lg-chev chevron">▶</span>
+        <span class="group-title" style="color:${g.color}">${g.label}</span>
+        <span class="group-meta"><span style="color:var(--text3)">暂无问题</span></span>
+      </div></div>`;
+    const dn=g.items.filter(i=>i.status==="已完成").length;
+    const rows=g.items.map((r,i)=>{
+      const sc={"待处理":"var(--red)","处理中":"var(--accent2)","已完成":"var(--accent)","无需处理":"var(--text3)"}[r.status]||"var(--text)";
+      const op=(r.operators&&r.operators.length)?r.operators.map(n=>"<span style='font-size:10px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 5px'>"+n+"</span>").join(" "):"<span style='font-size:10px;color:var(--text3)'>未分配</span>";
+      return `<div class="level-row">
+        <div class="lr-num">${i+1}</div>
+        <div class="lr-main">
+          <div class="lr-obj">${r.obj} <span style="font-size:10px;color:var(--text3)">· ${r.battle}</span></div>
+          <div class="lr-meta">${r.type} · ${r.reporters.map(x=>x.n).join("、")}</div>
+          <div class="lr-desc">${r.desc.split("\n")[0].slice(0,90)}${r.desc.length>90?"…":""}</div>
+        </div>
+        <div class="lr-right">
+          <span style="font-size:12px;font-weight:500;color:${sc}">● ${r.status}</span>
+          ${op}
+          ${r.date?`<span style="font-size:10px;color:var(--text3)">📅 ${r.date}</span>`:""}
+        </div>
+      </div>`;
+    }).join("");
+    return `<div class="level-group open ${g.cls}" id="${g.id}">
+      <div class="lg-hd" onclick="this.closest('.level-group').classList.toggle('open')">
+        <span class="lg-chev chevron">▶</span>
+        <span class="group-title" style="color:${g.color}">${g.label}</span>
+        <span class="group-meta">
+          <span style="background:${g.color};color:#fff;padding:1px 8px;border-radius:9px;font-size:11px;font-weight:500">${g.tag}</span>
+          <span>${g.items.length}条</span>
+          <span style="color:var(--accent)">完成 ${dn}/${g.items.length}</span>
+        </span>
+      </div>
+      <div class="lg-body">${rows}</div>
+    </div>`;
+  }).join("");
+}
+
+function scrollToLevelGroup(id){
+  const el=document.getElementById(id);
+  if(el){ el.classList.add("open"); el.scrollIntoView({behavior:"smooth",block:"start"}); }
+}
+
+
+function showCustomTypesBar(){
+  const bar=document.getElementById("customTypesBar");
+  bar.style.display=bar.style.display==="flex"?"none":"flex";
+  renderCustomTypesList();
+}
+function renderCustomTypesList(){
+  const el=document.getElementById("customTypesList"); if(!el) return;
+  if(!customTypes.length){ el.innerHTML='<span style="font-size:11px;color:var(--text3)">暂无自定义类型</span>'; return; }
+  el.innerHTML=customTypes.map(t=>
+    `<span class="custom-type-tag">${t}<span class="custom-type-del" onclick="removeCustomType('${t}')" title="删除此类型">×</span></span>`
+  ).join("");
+}
+function addTypeFromBar(){
+  const inp=document.getElementById("newTypeInp"); if(!inp) return;
+  const nm=inp.value.trim(); if(!nm) return;
+  if(addCustomType(nm)){
+    inp.value="";
+    rebuildTypeFilter();
+    renderCustomTypesList();
+    renderAll();
+    showToast("已新增类型："+nm,"ok");
+  } else {
+    showToast("该类型已存在","err");
+  }
+}
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+function initFilters(){
+  rebuildTypeFilter();
+}
+
+async function init(){
+  initFilters();
+  buildTabs();
+  await loadLocal();
+  buildTabs();
+  renderAll();
+  renderDash();
+  startAutoRefresh();
+}
+
+init();
+</script>
+</body>
+</html>
